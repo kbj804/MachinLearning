@@ -1,20 +1,64 @@
-import csv, codecs
 from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urlparse
-# from langdetect import detect_langs
-# import pymysql
-# import logging
-# from tld import get_tld
-# from tldextract import extract
+from langdetect import detect_langs
+import pymysql
+import logging
+from tld import get_tld
+from tldextract import extract
 import re
 import time
+import string
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(message)s')
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+find_url_sql = "select url from collected_url where url=%s"
+find_url_id_sql = "select url_id from collected_url where url=%s"
+find_auto_increment_sql = "select AUTO_INCREMENT from information_schema.TABLES where TABLE_SCHEMA =%s and TABLE_NAME=%s"
 
 
+insert_sql = "insert into collected_url (url, visited, parents, country) values(%s, %s, %s, %s)"
+insert_en_data_sql = "insert into en_data (url_id, text_data) values(%s, %s)"
+insert_an_data_sql = "insert into another_data (url_id, text_data, lang) values(%s, %s, %s)"
+insert_relation_sql = "insert into url_relation (parent_id, child_id) values(%s,%s)"
+# visited state -
+# 0:not visited yet,
+# 1:visited,
+# 2:visited and redirect to warning,
+# 3:visited but not exist
+
+generate_sql = "select url, url_id from collected_url where visited=0"
+after_generate_exist_sql = "update collected_url set visited=1, child_num=%s where url=%s"
+after_generate_warning_sql = "update collected_url set visited=2, harmful=1 where url=%s"
+after_generate_not_exist_sql = "update collected_url set visited=3 where url=%s"
+
+update_url_sql = "update collected_url set child=%s, parent=%s where url=%s"
+dup_update_sql = "update collected_url set ref_count= ref_count+1 where url=%s"
+##determine where to put visit check SQL. 1.at generate_url()-default, 2.parsed_data()-can check orgin url is valid or not. , 3.save_db()
+
+
+def generate_url():  # return generate urls
+    connection = pymysql.connect(host='localhost', user='bj', password='1234', db='url_db', charset='utf8')
+    with connection.cursor() as curs:
+        curs.execute(generate_sql)
+        generate_urls = curs.fetchmany(size=10)
+        print(generate_urls)
+        #for url in generate_urls :
+        #    curs.execute(after_generate_exist_sql,url[0])
+        connection.commit()
+        connection.close()
+    return generate_urls  # need to tokenize ( generate_urls -> generate_url )
 
 
 def parse_data(generate_url): #parse the url to create outlink urls.
-    #connection = pymysql.connect(host='localhost', user='bj', password='1234', db='url_db', charset='utf8')
+    connection = pymysql.connect(host='localhost', user='bj', password='1234', db='url_db', charset='utf8')
     try: # this try is to catch HTTP GET exception.
         req = requests.get("http://" + generate_url, timeout=3)  # need to modify to adapt "http or https"
         html = req.text
@@ -89,30 +133,52 @@ def parse_data(generate_url): #parse the url to create outlink urls.
         connection.commit()
         connection.close()
 
-# CSV 파일 열기
-filename = "harmful_7_seed.csv"
-fp = codecs.open(filename, "r", "EUC-KR")
-# 한 줄씩 읽어 들이기
-reader = csv.reader(fp, delimiter=",", quotechar='"')
-for white_url in reader:
-    #print(cells[1], cells[2])
-    print(cells)
+def save_db(origin_url_id, text_data, urls_set, result, lang):
+    # sould use 'try-finally' and 'with' because connection to db can cause connection leak when it raise exceptions.
+    connection = pymysql.connect(host='localhost', user='bj', password='1234', db='url_db', charset='utf8')
+    try:
+        with connection.cursor() as curs:
+            for url in urls_set: # insert new url info.
+                if curs.execute(find_url_id_sql, (url)) == 0:  # when new url is not in database.
+                    curs.execute(insert_sql, (url, 0, origin_url_id, lang))
+                    logger.info("Inserted : " + url)
+                else:
+                    curs.execute(dup_update_sql,url)
+                    logger.info("Duplicated : " + url)
+            connection.commit()
+            for url in urls_set: #insert url relation info.
+                curs.execute(find_url_id_sql,url)
+                child_id = curs.fetchone()[0]
+                if origin_url_id != child_id :
+                    curs.execute(insert_relation_sql,(origin_url_id,child_id))
+                    #curs.execute(update_url_sql,(child_id, origin_url_id,url))
+            connection.commit()
+            if text_data !="" and result == 1:
+                curs.execute(insert_en_data_sql,(origin_url_id,text_data)) # insert url text data info.
+            elif text_data!="" and result ==2:
+                curs.execute(insert_an_data_sql,(origin_url_id, text_data, lang))
+        connection.commit()
+    finally:
+        connection.close()
 
+
+
+#if __name__ == "__main__":
+ #   generated = generate_url()
+  #  for origin_url in generated:
+   #         parsed, text_data, result = parse_data(origin_url[0])
+    #        save_db(origin_url[1], text_data, parsed, result)
 
 if __name__ == "__main__":
     while 1:
         try:
-            # CSV 파일 열기
-            filename = "harmful_7_seed.csv"
-            fp = codecs.open(filename, "r", "EUC-KR")
-            # 한 줄씩 읽어 들이기
-            reader = csv.reader(fp, delimiter=",", quotechar='"')
-            for white_url in reader:
-                # print(cells[1], cells[2])
-                parsed, text_data, result, lang = parse_data(white_url[1])
-                print(white_url, "origin_url[0] = "+ white_url[1])
-                print(parse_data(white_url[0]))
-                save_db(white_url[1], text_data, parsed, result, lang)
+            generated = generate_url()
+            for origin_url in generated:
+                    parsed, text_data, result, lang = parse_data(origin_url[0])
+                    print(origin_url,
+                          "origin_url[0] = "+ origin_url[0])
+                    print(parse_data(origin_url[0]))
+                    save_db(origin_url[1], text_data, parsed, result, lang)
             time.sleep(1)
         except:
             logger.error('Deadlock has occured.')
