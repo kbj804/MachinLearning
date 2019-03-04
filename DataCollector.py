@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
 from urllib.parse import urlparse
-from langdetect import detect_langs
 import pymysql
 import logging
 from tld import get_tld

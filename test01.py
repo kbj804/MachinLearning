@@ -6,7 +6,10 @@ import nltk
 from nltk.stem.snowball import SnowballStemmer
 #nltk.download('punkt')
 #nltk.download('stopwords')
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
+from collections import Counter
+
 import matplotlib.pyplot as plt
 
 stopwords = nltk.corpus.stopwords.words('english') # '은,는,이,가' 이런거 없애주는 사전
@@ -72,7 +75,7 @@ def tokenize_only(text):
 if __name__ == "__main__":
     # amsterdamsexxx.com
     # mango6.info
-    url = "http://" + "escortsofsincity.com"
+    url = "http://" + "amsterdamsexxx.com"
 
     # urlopen()으로 데이터 가져오기 --- (※1)
     response = requests.get(url)
@@ -88,7 +91,7 @@ if __name__ == "__main__":
     max_document_length = 0
 
     str = tokenize_and_stem(text)
-    print(str)
+    #print(str)
     if len(str) > max_document_length:
         max_document_length = len(str)
     text1.append(' '.join(str))  # join: list -> str
@@ -96,17 +99,31 @@ if __name__ == "__main__":
     #print(text1)
     #print(text1[:2])
 
-    count_vectorizer = CountVectorizer(stop_words='english',
+    count_vectorizer = CountVectorizer(stop_words=stopwords,
                                        #max_df=0.9,
                                        max_features=10000,
-                                       #min_df=0.01,
-                                       # ngram_range=(1,2),
-                                       #tokenizer=tokenize_only
+                                       min_df= 0.9,
+                                       #ngram_range=(1,2),
+                                       tokenizer=tokenize_only
                                         )
-    count_matrix= count_vectorizer.fit_transform(text1)
-    wordcount = count_vectorizer.vocabulary_
 
-    print(wordcount)
+    X = count_vectorizer.fit_transform(text1)
+    #word_vec = count_vectorizer.vocabulary_
+    #print(word_vec)
+    vocab = list(count_vectorizer.get_feature_names())
+    counts = X.sum(axis=0).A1
+
+    freq_distribution = Counter(dict(zip(vocab, counts)))
+    print(freq_distribution.most_common(20))
+    temp=[]
+    for word in freq_distribution.most_common(20):
+        #print(word[0])
+        temp.append(word[0])
+    most20_word_str = ' '.join(temp)
+    print(most20_word_str)
+    print(most20_word_str.split())
+    #tfidv = TfidfVectorizer().fit(corpus)
+
     #terms = count_vectorizer.get_feature_names()
     #print(terms)
 
