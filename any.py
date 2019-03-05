@@ -1,30 +1,44 @@
-import urllib.request
-from collections import Counter
-
-import numpy as np
-
-from nltk import word_tokenize
-from sklearn.feature_extraction.text import CountVectorizer
-
-# Our sample textfile.
-url = 'http://amsterdamsexxx.com'
-response = urllib.request.urlopen(url)
-data = response.read().decode('utf8')
 
 
-# Note that `ngram_range=(1, 1)` means we want to extract Unigrams, i.e. tokens.
-ngram_vectorizer = CountVectorizer(analyzer='word', tokenizer=word_tokenize, ngram_range=(1, 1), min_df=1)
-# X matrix where the row represents sentences and column is our one-hot vector for each token in our vocabulary
-X = ngram_vectorizer.fit_transform(data.split('\n'))
+harmful_url_word = [
+    ('sex', 1), ('porn', 1), ('gay', 1), ('cam', 1), ('xxx', 1), ('fuck', 1), ('shemal', 1), ('lesbian', 1),('dick',1),
+    ('teen', 2), ('girl', 2), ('pussi', 2), ('ass', 2), ('babe', 2), ('cock', 2), ('anal', 2), ('milf', 2), ('blond', 2), ('nude', 2), ('blowjob', 2),('cum', 2), ('young', 2),
+    ('game', 3), ('casino', 3), ('card', 3), ('race', 3),
+    ('escort', 4), ('servic', 4)
+]
 
-# Vocabulary
-vocab = list(ngram_vectorizer.get_feature_names())
+harmful_url_dic = {'sex': 1, 'porn': 1, 'teen': 2, 'game': 3, 'escort': 4}
 
-# Column-wise sum of the X matrix.
-# It's some crazy numpy syntax that looks horribly unpythonic
-# For details, see http://stackoverflow.com/questions/3337301/numpy-matrix-to-array
-# and http://stackoverflow.com/questions/13567345/how-to-calculate-the-sum-of-all-columns-of-a-2d-numpy-array-efficiently
-counts = X.sum(axis=0).A1
+def count_harmful_word_num(str):
+    harmful_word_num = 0
+    idx=0
+    idx1 = 0
+    idx2 = 0
+    idx3 = 0
+    idx4 = 0
+    for word in harmful_word: # [0]:word , [1]:idx
+        if word[0] in str:
+            harmful_word_num += 1
+            if word[1] == 1 : idx1 +=1
+            elif word[1] == 2 : idx2 +=1
+            elif word[1] == 3 : idx3 +=1
+            elif word[1] == 4 : idx4 +=1
+            idx = max(idx1,idx2,idx3,idx4)
+    return harmful_word_num, idx
 
-freq_distribution = Counter(dict(zip(vocab, counts)))
-print (freq_distribution.most_common(10))
+
+# 딕셔너리 이용해서 word count 하면 될듯!
+def fuck(url):
+    try:
+        print(url in harmful_url_dic)
+
+
+        if url in harmful_url_dic:
+            print(harmful_url_dic[url])
+
+
+    except:
+        print("asd")
+
+fuck('game')
+#print(count_harmful_word_num('casino'))
