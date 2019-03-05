@@ -7,9 +7,9 @@ up_visit = "update collect_endata set white_visit = white_visit+1 where url_id=%
 update_harmful_url = "update harmful_weight set url_harmful_idx= %s where url_id=%s "
 
 harmful_url_word = [
-    ('sex', 1), ('porn', 1), ('gay', 1), ('cam', 1), ('xxx', 1), ('fuck', 1), ('shemal', 1), ('lesbian', 1),('dick', 1),
+    ('sex', 1), ('porn', 1), ('gay', 1), ('cam', 1), ('xxx', 1), ('fuck', 1), ('shemal', 1), ('lesbian', 1),('dick', 1),('spank',1),
     ('teen', 2), ('girl', 2), ('pussi', 2), ('ass', 2), ('babe', 2), ('cock', 2), ('anal', 2), ('milf', 2), ('blond', 2), ('nude', 2), ('blowjob', 2),('cum', 2), ('young', 2),
-    ('game', 3), ('casino', 3), ('card', 3), ('race', 3),('porker',3),
+    ('game', 3), ('casino', 3), ('card', 3), ('race', 3),('porker',3),('gamb',3),
     ('escort', 4), ('servic', 4)
 ]
 
@@ -27,8 +27,6 @@ def save_url_idx(url_info):
         # 2: 아청 유해 사이트
         # 3: 도박 사이트
         # 4: 성매매 사이트
-
-# url 이름으로 검색하는거 url자체를 전처리 안할거면  해결해ㅑㅇ하는ㅇ라ㅡㅜㅁㄴ랑누리ㅏ
         with connection.cursor() as curs:
             try:
                 url = url_info[1]
@@ -42,15 +40,8 @@ def save_url_idx(url_info):
                         print("Update Harmful URL word :  " + word[0])
                         break;
 
-
-
-
-
             except:
                 print("I dont know why occured this error")
-
-
-
 
 if __name__ == "__main__":
     while 1:

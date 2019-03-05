@@ -119,9 +119,12 @@ if __name__ == "__main__":
     for word in freq_distribution.most_common(20):
         #print(word[0])
         temp.append(word[0])
+    print(temp)
     most20_word_str = ' '.join(temp)
     print(most20_word_str)
-    print(most20_word_str.split())
+    #print(most20_word_str.split())
+
+
     #tfidv = TfidfVectorizer().fit(corpus)
 
     #terms = count_vectorizer.get_feature_names()
