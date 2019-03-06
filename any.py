@@ -1,35 +1,49 @@
+# 텍스트 사전 준비 작업(텍스트 전처리) - 텍스트 정규화
+from nltk import word_tokenize, sent_tokenize
+import nltk
+from nltk.stem import WordNetLemmatizer
+from nltk.stem import LancasterStemmer
 
-harmful_url_dic = {'sex': 1, 'porn': 1, 'gay': 1, 'movi': 1, 'movie': 1, 'free': 1, 'tube': 1, 'video': 1, 'phone': 1, 'cam': 1,
-                   'live': 1, 'xxx': 1, 'matur': 1, 'fuck': 1, 'pic': 1, 'chat': 1, 'dick': 1,    'hot': 1, 'amateur': 1, 'site': 1,
-                   'webcam': 1, 'anal': 1, 'boy': 1, 'asian': 1, 'milf': 1, 'adult': 1,    'big':1 , 'shemal': 1, 'best': 1, 'cartoon':1,
-                   'pictur': 1, 'picture': 1, 'lesbian': 1,
-
-                   'teen': 2, 'big': 2, 'girl': 2, 'sex': 2, 'fuck': 2, 'video': 2, 'porn': 2, 'pussi': 2, 'ass': 2, 'tit': 2,
-                   'matur': 2, 'babe': 2, 'hot': 2, 'amateur': 2, 'cock': 2, 'asian': 2, 'anal': 2,    'milf': 2, 'sexi': 2, 'black': 2,
-                   'lesbian': 2, 'watch': 2, 'pic': 2, 'blond': 2, 'nude': 2,    'free': 2, 'hairi': 2, 'blowjob': 2, 'cum': 2, 'young': 2,
-                   'shemal': 2, 'hardcor': 2, 'hardcore': 2 ,
-
-                   'game': 3, 'casino': 3, 'play': 3, 'onlin': 3, 'free': 3, 'review': 3, 'mobil': 3, 'download': 3, 'travel': 3,
-                   'best': 3, 'home': 3, 'hotel': 3, 'live': 3, 'read': 3, 'new': 3, 'info': 3,    'video': 3, 'tip': 3, 'educ': 3,
-                   'contact': 3, 'site': 3, 'machin': 3, 'guid': 3, 'kid': 3,    'app': 3, 'discount': 3, 'sport': 3, 'sex': 3, 'learn': 3,
-                   'card': 3, 'insur': 3, 'news': 3,    'race': 3, 'real': 3, 'dress': 3, 'visit': 3, 'admin': 3, 'softwar': 3,
-
-                   'escort': 4, 'london': 4, 'servic': 4, 'girl': 4, 'agenc': 4, 'home': 4, 'contact': 4, 'directori': 4,
-                   'galleri': 4, 'new': 4, 'read': 4, 'massag': 4, 'model': 4, 'link': 4, 'blog': 4,    'review': 4, 'femal': 4, 'fmale': 4,
-                   'view': 4, 'vip': 4, 'asian': 4, 'book': 4, 'rate': 4, 'high': 4,    'uk': 4, 'sex': 4, 'russian': 4, 'profil': 4,
-                   'busti': 4, 'class': 4, 'adult': 4, 'sexi': 4,    'blond': 4, 'york': 4, 'list': 4, 'guid': 4, 'comment': 4, 'date': 4
-}
-
-def count_harmful_word(top20):
-    harmful_word_num = 0
-    for word in top20: # top 20 word
-        if word in harmful_url_dic:
-            harmful_word_num += 1
-            #if harmful_url_dic.get(word) == 1: idx += 1
-
-    return harmful_word_num
+text_sample = 'The Matrix is everywhere its all around us, here even in this room. \
+               You can see it out your window or on your television. \
+               You feel it when you go to work, or go to church or pay your taxes.'
+stemmer = LancasterStemmer()
+lemma = WordNetLemmatizer()
 
 
-fuck = ['porn', 'sex', 'free', 'video', 'teen', 'movi', 'tube', 'gay', 'girl', 'escort', 'milf', 'xxx', 'adult', 'webcam', 'porno', 'colleg', 'toy', 'mobil', 'amateur', 'cam']
-print(count_harmful_word(fuck))
+# 여러개의 문장으로 된 입력 데이터를 문장별로 단어 토큰화 만드는 함수 생성
+def tokenize_text(text):
+    # 문장별로 분리 토큰
+    sentences = sent_tokenize(text)
+    # 분리된 문장별 단어 토큰화
+    word_tokens = [word_tokenize(sentence) for sentence in sentences]
+    return word_tokens
 
+
+# 여러 문장들에 대해 문장별 단어 토큰화 수행.
+word_tokens = tokenize_text(text_sample)
+#print(type(word_tokens), len(word_tokens))
+#print(word_tokens)
+stopwords = nltk.corpus.stopwords.words('english')
+stopwords.append('\'s')
+stopwords.append('n\'t')
+
+print('영어 stop words 갯수:',len(stopwords))
+print(stopwords[:len(stopwords)])
+
+# Stop word 제거
+
+all_tokens = []
+# 위 예제의 3개의 문장별로 얻은 word_tokens list 에 대해 stop word 제거 Loop
+for sentence in word_tokens:
+    filtered_words = []
+    # 개별 문장별로 tokenize된 sentence list에 대해 stop word 제거 Loop
+    for word in sentence:
+        # 소문자로 모두 변환합니다.
+        word = word.lower()
+        # tokenize 된 개별 word가 stop words 들의 단어에 포함되지 않으면 word_tokens에 추가
+        if word not in stopwords:
+            filtered_words.append(word)
+    all_tokens.append(filtered_words)
+
+#print(all_tokens)

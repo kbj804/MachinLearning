@@ -12,7 +12,11 @@ from collections import Counter
 
 import matplotlib.pyplot as plt
 
+# stopwords 추가용 append
 stopwords = nltk.corpus.stopwords.words('english') # '은,는,이,가' 이런거 없애주는 사전
+stopwords.append('\'s')
+stopwords.append('n\'t')
+
 stemmer = SnowballStemmer("english")  # 부사,형용사 이런걸 어근으로 바꿔줌
 
 
@@ -75,7 +79,7 @@ def tokenize_only(text):
 if __name__ == "__main__":
     # amsterdamsexxx.com
     # mango6.info
-    url = "http://" + "amsterdamsexxx.com"
+    url = "http://" + "bukkakereport.com"
 
     # urlopen()으로 데이터 가져오기 --- (※1)
     response = requests.get(url)
@@ -96,7 +100,7 @@ if __name__ == "__main__":
         max_document_length = len(str)
     text1.append(' '.join(str))  # join: list -> str
     #url.append(i[0])
-    #print(text1)
+    print(text1)
     #print(text1[:2])
 
     count_vectorizer = CountVectorizer(stop_words=stopwords,

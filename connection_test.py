@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 #nltk.download('stopwords')
 
 stopwords = nltk.corpus.stopwords.words('english') # '은,는,이,가' 이런거 없애주는 사전
+stopwords.append('\'s')
+stopwords.append('n\'t')
 stemmer = SnowballStemmer("english")  # 부사,형용사 이런걸 어근으로 바꿔줌
 
 harmful_url_dic = {'sex': 1, 'porn': 1, 'gay': 1, 'movi': 1, 'movie': 1, 'free': 1, 'tube': 1, 'video': 1, 'phone': 1, 'cam': 1,
@@ -42,6 +44,10 @@ harmful_url_dic = {'sex': 1, 'porn': 1, 'gay': 1, 'movi': 1, 'movie': 1, 'free':
 
 generate_sql = "select url_id, url from harmful_weight where top_word is null "
 save_wd = "update harmful_weight set harmful_word_num=%s, top_word=%s where url_id=%s"
+insert_txt="insert into en_data (url_id, text) values(%s,%s)"
+
+fail_acceses = "update harmful_weight set top_word=0 where url=%s"
+fail_lang = "update harmful_weight set top_word=1 where url_id=%s"
 
 def pre_process(soup):
     # kill all script and style elements
@@ -97,7 +103,7 @@ def parse_word(generate_url): #parse the url to create outlink urls.
         res = response.text
         html = BeautifulSoup(res, "html.parser")
         text = pre_process(html)
-
+        print("connection . . . . . . . .  .  " + generate_url)
         text1 = []
         # url = []
         max_document_length = 0
@@ -110,7 +116,7 @@ def parse_word(generate_url): #parse the url to create outlink urls.
         count_vectorizer = CountVectorizer(stop_words=stopwords,
                                            # max_df=0.9,
                                            max_features=10000,
-                                           min_df=0.9,
+                                           min_df=0.8,
                                            # ngram_range=(1,2),
                                            tokenizer=tokenize_only
                                            )
@@ -124,21 +130,30 @@ def parse_word(generate_url): #parse the url to create outlink urls.
        # print(freq_distribution.most_common(20))
         data = []
         for word in freq_distribution.most_common(20):
-            print(word[0])
+            #print(word[0])
             data.append(word[0])
 
         count = count_harmful_word(data)
         data_string=' '.join(data)
+        return data_string, count, text1
 
-        return data_string, count
 
     except:
-        print("####  FAIL TO INSERT WORD DATA ####")
+        with connection.cursor() as curs:
+            curs.execute(fail_acceses, (generate_url))
+        print("####  FAIL TO INSERT WORD DATA URL : "+ generate_url)
 
 
-def save_word(str_top_word, count_word, url_id):
-    with connection.cursor() as curs:
-        curs.execute(save_wd, (count_word, str_top_word, url_id))
+def save_word(str_top_word, count_word, url_id, text):
+    try:
+        with connection.cursor() as curs:
+            curs.execute(save_wd, (count_word, str_top_word, url_id))
+            curs.execute(insert_txt, (url_id, text))
+            print("Insert Complete : ")
+    except:
+        with connection.cursor() as curs:
+            curs.execute(fail_lang, url_id)
+            print("Maybe, FAIL TO INCODING....! ")
 
 def count_harmful_word(top20):
     harmful_word_num = 0
@@ -158,15 +173,15 @@ if __name__ == "__main__":
             for origin_url in generated:
                 # origin_url[0] : url_id
                 # origin_url[1] : url
-                most20_word, count = parse_word(origin_url[1]) # top 20 word 정보 str로 반환
-                save_word(most20_word, count, origin_url[0])
-                print(most20_word)
+                most20_word, count, text = parse_word(origin_url[1]) # top 20 word 정보 str로 반환
+                save_word(most20_word, count, origin_url[0], text)
+                #print(most20_word)
 
             connection.commit()
             connection.close()
 
 
-        except:
-                connection.commit()
-                connection.close()
-                print(" ###### Deadlock Occured ! ! ! ######")
+        except Exception as ex:
+            print(" ###### Deadlock Occured ! ! ! ######   ", ex)
+            connection.commit()
+            connection.close()
