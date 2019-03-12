@@ -44,14 +44,14 @@ harmful_url_dic = {'sex': 1, 'porn': 1, 'gay': 1, 'movi': 1, 'movie': 1, 'free':
 }
 
 
-generate_sql = "select url_id, url from harmful_weight where top_word is null"
-save_wd = "update harmful_weight set harmful_word_num=%s, top_word=%s, img_num=%s, child_num=%s where url_id=%s"
+generate_sql = "select url_id, url from for_learning3 where top_word is null"
+save_wd = "update for_learning3 set harmful_word_num=%s, top_word=%s, img_num=%s, child_num=%s where url_id=%s"
 
 insert_txt="insert into en_data (url_id, text) values(%s,%s)"
 update_txt="update en_data set text=%s where url_id=%s"
 
-fail_acceses = "update harmful_weight set top_word=0 where url=%s"
-fail_lang = "update harmful_weight set top_word=1 where url_id=%s"
+fail_acceses = "update for_learning3 set top_word=0 where url=%s"
+fail_lang = "update for_learning3 set top_word=1 where url_id=%s"
 
 def pre_process(soup):
     # kill all script and style elements
@@ -141,7 +141,7 @@ def parse_word(generate_url): #parse the url to create outlink urls.
         for word in freq_distribution.most_common(20):
             #print(word[0])
             data.append(word[0])
-        print("DATA: ",data)
+        print("DATA : ", data)
         count = count_harmful_word(data)
         data_string=' '.join(data)
         return data_string, count, text1, img_num, child_num

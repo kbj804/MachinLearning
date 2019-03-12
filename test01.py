@@ -79,7 +79,8 @@ def tokenize_only(text):
 if __name__ == "__main__":
     # amsterdamsexxx.com
     # mango6.info
-    url = "http://" + "bukkakereport.com"
+    # hot-cams.nl
+    url = "http://" + "amsterdamsexxx.com"
 
     # urlopen()으로 데이터 가져오기 --- (※1)
     response = requests.get(url)

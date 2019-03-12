@@ -1,16 +1,20 @@
 import pymysql
 
-generate_sql = "select url_id, url, harmful_count from collect_endata where harmful=2 and white_visit=0"
-insert_sql = "insert into harmful_weight (url_id, url, url_harmful_idx, harmful_child_num) values(%s,%s,%s,%s)"
+generate_sql = "SELECT url_id, url, harmful_count FROM bjcrawl.collect_endata where visited > 0 and harmful = 0 and white_visit=0"
+# select url_id, url, harmful_count from collect_endata where harmful=7 and white_visit=0
+insert_sql = "insert into for_learning3 (url_id, url, url_harmful_idx, harmful_child_num) values(%s,%s,%s,%s)"
+# ref_count
 
+# harmful_1_seed2
 up_visit = "update collect_endata set white_visit = white_visit+1 where url_id=%s"
-update_harmful_url = "update harmful_weight set url_harmful_idx= %s where url_id=%s "
+update_harmful_url = "update for_learning3 set url_harmful_idx= %s where url_id=%s "
 
 harmful_url_word = [
-    ('sex', 1), ('porn', 1), ('gay', 1), ('cam', 1), ('xxx', 1), ('fuck', 1), ('shemal', 1), ('lesbian', 1),('dick', 1),('spank',1),
+    ('sex', 1), ('porn', 1), ('gay', 1), ('xxx', 1), ('fuck', 1), ('shemal', 1), ('lesbian', 1),('dick', 1),('spank',1),
     ('teen', 2), ('girl', 2), ('pussi', 2), ('ass', 2), ('babe', 2), ('cock', 2), ('anal', 2), ('milf', 2), ('blond', 2), ('nude', 2), ('blowjob', 2),('cum', 2), ('young', 2),
     ('game', 3), ('casino', 3), ('card', 3), ('race', 3),('porker',3),('gamb',3),
-    ('escort', 4), ('servic', 4)
+    ('escort', 4), ('servic', 4),
+    ('cam', 5), ('chat',5)
 ]
 
 def generate_url():  # return generate urls
