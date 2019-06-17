@@ -1,3 +1,10 @@
+# https://github.com/summanlp/textrank
+
+from summa import summarizer
+from summa import keywords
+from bs4 import BeautifulSoup
+import requests
+
 from nltk.stem import WordNetLemmatizer
 import nltk
 import string
@@ -11,9 +18,17 @@ from collections import Counter
 import ipt
 from sklearn.feature_extraction.text import CountVectorizer
 
-
 remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
 lemmar = WordNetLemmatizer()
+
+def count_harmful_word(top20):
+    harmful_word_num = 0
+    for word in top20: # top 20 word
+        if word in ipt.harmful_url_dic:
+            harmful_word_num += 1
+            #if harmful_url_dic.get(word) == 1: idx += 1
+
+    return harmful_word_num
 
 def LemTokens(tokens):
     return [lemmar.lemmatize(token) for token in tokens]
@@ -24,7 +39,7 @@ def LemNormalize(text):
 def pre_process(soup):
     # kill all script and style elements
     for script in soup(["script", "style"]):
-         script.extract()  # rip it out
+        script.extract()    # rip it out
 
     # get text
     text = soup.get_text()
@@ -36,50 +51,12 @@ def pre_process(soup):
     # drop blank lines
     text = '\n'.join(chunk for chunk in chunks if chunk)
     text = re.sub("[^a-zA-Z]", " ", text)
+
     return text.lower()
 
-def count_child_num(soup):
-    urls = soup.find_all('a', href=True)
-    urls_set = set()  # make set to remove duplication.
-    data = ''  # to save text data
-    for url in urls:
-        if url.text != '' or url.text != ' ':
-            data = data + url.text.replace('\n', '').replace('\r', '') + ' '
-        try:
-            str = urlparse(url['href']).netloc  # by using urlparse, we can check it is http:// or https:// etc.
-            if str != "":
-                urls_set.add(extract("http://" + str.replace(" ", "")).registered_domain)
-        except:
-            print("URL not Valid : %s" + url)
-    print(urls_set)
-    try:  # this try is to catch set error.
-        urls_set.remove("")
-        return len(urls_set)
-
-    except:
-        return len(urls_set)
-
-def count_harmful_word(top20):
-    harmful_word_num = 0
-    for word in top20: # top 20 word
-        if word in ipt.harmful_url_dic:
-            harmful_word_num += 1
-            #if harmful_url_dic.get(word) == 1: idx += 1
-
-    return harmful_word_num
-
-def tfidf_parse(generate_url): #parse the url to create outlink urls.
+def tfidf_parse(text): #parse the url to create outlink urls.
     try: # this try is to catch HTTP GET exception.
-        response = requests.get("http://" + generate_url, timeout=3)  # need to modify to adapt "http or https"
-        html = response.text
-        soup = BeautifulSoup( html , 'html.parser')
-
-        imgs = soup.find_all('img')
-        img_num = len(imgs)
-        child_num = count_child_num(soup)
-
-        text = pre_process(soup)
-        print("connection . . . . . . . .  .  " + generate_url)
+        print("connection . . . . . . . .  .  ")
         text1 = []
         # url = []
         #max_document_length = 0
@@ -106,19 +83,40 @@ def tfidf_parse(generate_url): #parse the url to create outlink urls.
        # print(freq_distribution.most_common(20))
         data = []
         data1 =[]
-        for word in freq_distribution.most_common(100):
+        for word in freq_distribution.most_common(20):
             #print(word[0])
             data.append(word[0])
         print("DATA: ",data)
         count = count_harmful_word(data)
         data_string=' '.join(data)
+        print(count)
 
-        return data_string, count, text1, img_num, child_num
-
+        return data_string, count, text1
 
     except Exception as ex:
-        print("####  FAIL TO INSERT WORD DATA URL  " , ex)
+        print(ex)
+
 
 if __name__ == "__main__":
-    # camscamscams.com
-    tfidf_parse("100livecam.com")
+    # amsterdamsexxx.com
+    # mango6.info
+    # hot-cams.nl
+    url = "http://" + "wowtrannyporn.com"
+#amsterdamsexxx.com
+    # urlopen()으로 데이터 가져오기 --- (※1)
+    response = requests.get(url)
+    res = response.text
+
+
+    # BeautifulSoup으로 분석하기 --- (※2)
+    html = BeautifulSoup(res, "html.parser")
+    text = pre_process(html)
+    #print(summarizer.summarize(text))
+    print("Text Rank:")
+    data_string = ' '.join(keywords.keywords(text, words=20, split=True, language='english'))
+    list_string = data_string.split()
+    print(list_string)
+
+    print("TF-IDF: ")
+    print(tfidf_parse(text))
+

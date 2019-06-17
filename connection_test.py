@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import urllib.request as req
+import ipt
 from urllib.parse import urlparse
 import requests
 from tldextract import extract
@@ -19,7 +20,7 @@ import matplotlib.pyplot as plt
 
 stopwords = nltk.corpus.stopwords.words('english') # '은,는,이,가' 이런거 없애주는 사전
 stopwords.append('\'s')
-stopwords.append('n\'t')
+stopwords.append('\'t')
 stemmer = SnowballStemmer("english")  # 부사,형용사 이런걸 어근으로 바꿔줌
 
 harmful_url_dic = {'sex': 1, 'porn': 1, 'gay': 1, 'movi': 1, 'movie': 1, 'free': 1, 'tube': 1, 'video': 1, 'phone': 1, 'cam': 1, 'pornhub':1,
